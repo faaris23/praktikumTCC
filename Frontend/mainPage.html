@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Note Taking App</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 h-screen flex flex-col overflow-auto">
+    
+    <!-- Sidebar Button -->
+    <button id="toggleSidebar" class="fixed top-4 left-4 text-3xl z-50">☰</button>
+    
+    <!-- Sidebar -->
+    <div id="sidebar" class="w-64 bg-white shadow-md fixed top-0 left-0 h-full p-4 transform -translate-x-full transition-transform z-40">
+        <div class="relative pb-8">
+            <button id="addNote" class="text-2xl mb-4 absolute top-12 left-0">+</button>
+        </div>
+        <ul id="noteList" class="mt-12"></ul>
+    </div>
+    
+    <!-- Overlay to close sidebar -->
+    <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden"></div>
+    
+    <!-- Main Content -->
+    <div class="flex-1 p-6 mt-12">
+        <input id="noteTitle" class="w-full text-2xl font-bold p-2 border-b mb-4" placeholder="Title..."/>
+        <textarea id="noteContent" class="w-full min-h-screen p-2 border" placeholder="Write your note..."></textarea>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="fixed bottom-4 right-4 flex space-x-2">
+        <button id="deleteNote" class="bg-red-500 text-white px-6 py-3 rounded-full shadow-lg">Delete</button>
+        <button id="saveNote" class="bg-blue-500 text-white px-6 py-3 rounded-full shadow-lg">Save</button>
+    </div>
+    
+    <script>
+        let notes = {};
+        let currentNoteId = null;
+        
+        $(document).ready(function() {
+            $("#toggleSidebar").click(() => {
+                $("#sidebar").toggleClass("-translate-x-full");
+                $("#overlay").toggleClass("hidden");
+            });
+            
+            $("#overlay").click(() => {
+                $("#sidebar").addClass("-translate-x-full");
+                $("#overlay").addClass("hidden");
+            });
+            
+            function createNewNote() {
+                let noteId = Date.now();
+                let defaultTitle = "New Note";
+                
+                $("#noteTitle").val("");
+                $("#noteContent").val("");
+                
+                notes[noteId] = { title: defaultTitle, content: "" };
+                currentNoteId = noteId;
+                
+                let truncatedTitle = defaultTitle;
+                
+                $("#noteList").prepend(`<li class='p-2 border-b cursor-pointer' data-id='${noteId}'>${truncatedTitle}</li>`);
+            }
+            
+            $("#addNote").click(() => {
+                createNewNote();
+            });
+            
+            $("#saveNote").click(() => {
+                if (currentNoteId !== null) {
+                    let title = $("#noteTitle").val().trim();
+                    let content = $("#noteContent").val().trim();
+                    
+                    if (!title) title = "Untitled Note";
+                    
+                    let truncatedTitle = title.length > 20 ? title.substring(0, 17) + "..." : title;
+                    
+                    notes[currentNoteId] = { title, content };
+                    
+                    if ($(`#noteList li[data-id='${currentNoteId}']`).length === 0) {
+                        $("#noteList").prepend(`<li class='p-2 border-b cursor-pointer' data-id='${currentNoteId}'>${truncatedTitle}</li>`);
+                    } else {
+                        $(`#noteList li[data-id='${currentNoteId}']`).text(truncatedTitle);
+                    }
+                } else if (Object.keys(notes).length === 0) {
+                    createNewNote();
+                }
+            });
+            
+            $("#deleteNote").click(() => {
+                if (currentNoteId !== null) {
+                    let noteIds = Object.keys(notes);
+                    let index = noteIds.indexOf(currentNoteId.toString());
+                    
+                    delete notes[currentNoteId];
+                    $(`#noteList li[data-id='${currentNoteId}']`).remove();
+                    
+                    if (noteIds.length > 1) {
+                        let newIndex = index > 0 ? index - 1 : 0;
+                        let newNoteId = noteIds[newIndex];
+                        
+                        $("#noteTitle").val(notes[newNoteId].title);
+                        $("#noteContent").val(notes[newNoteId].content);
+                        currentNoteId = newNoteId;
+                    } else {
+                        currentNoteId = null;
+                        $("#noteTitle").val("");
+                        $("#noteContent").val("");
+                        
+                        if (Object.keys(notes).length === 0) {
+                            createNewNote();
+                        }
+                    }
+                }
+            });
+            
+            $(document).on("click", "#noteList li", function() {
+                let noteId = $(this).data("id");
+                if (notes[noteId]) {
+                    $("#noteTitle").val(notes[noteId].title);
+                    $("#noteContent").val(notes[noteId].content);
+                    currentNoteId = noteId;
+                }
+            });
+            
+            // Create the first note if none exists
+            if (Object.keys(notes).length === 0) {
+                createNewNote();
+            }
+        });
+    </script>
+</body>
+</html>

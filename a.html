@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Note Taking App</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 h-screen flex flex-col overflow-auto">
+    
+    <!-- Sidebar Button -->
+    <button id="toggleSidebar" class="fixed top-4 left-4 text-3xl z-50">☰</button>
+    
+    <!-- Sidebar -->
+    <div id="sidebar" class="w-64 bg-white shadow-md fixed top-0 left-0 h-full p-4 transform -translate-x-full transition-transform z-40">
+        <div class="relative pb-8">
+            <button id="addNote" class="text-2xl mb-4 absolute top-12 left-0">+</button>
+        </div>
+        <ul id="noteList" class="mt-12"></ul>
+    </div>
+    
+    <!-- Overlay to close sidebar -->
+    <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden"></div>
+    
+    <!-- Main Content -->
+    <div class="flex-1 p-6 mt-12">
+        <input id="noteTitle" class="w-full text-2xl font-bold p-2 border-b mb-4" placeholder="Title..."/>
+        <textarea id="noteContent" class="w-full min-h-screen p-2 border" placeholder="Write your note..."></textarea>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="fixed bottom-4 right-4 flex space-x-2">
+        <button id="deleteNote" class="bg-red-500 text-white px-6 py-3 rounded-full shadow-lg">Delete</button>
+        <button id="saveNote" class="bg-blue-500 text-white px-6 py-3 rounded-full shadow-lg">Save</button>
+    </div>
+    
+    <script>
+        let currentNoteId = null;
+        let userId = localStorage.getItem("userId");
+        let token = localStorage.getItem("token");
+        
+        if (!userId || !token) {
+            alert("You need to login first!");
+            window.location.href = "login.html";
+        }
+
+        function fetchNotes() {
+            $.ajax({
+                url: `http://localhost:5000/notes/${userId}`,
+                type: "GET",
+                headers: { "Authorization": `Bearer ${token}` },
+                success: (data) => {
+                    $("#noteList").html("");
+                    data.forEach(note => {
+                        $("#noteList").append(`<li class='p-2 border-b cursor-pointer' data-id='${note.id}'>${note.title}</li>`);
+                    });
+                }
+            });
+        }
+
+        function saveNote() {
+            let title = $("#noteTitle").val().trim();
+            let content = $("#noteContent").val().trim();
+
+            let method = currentNoteId ? "PATCH" : "POST";
+            let url = currentNoteId ? `http://localhost:5000/note/${currentNoteId}` : "http://localhost:5000/notes";
+            let data = { user_id: userId, title, content };
+
+            $.ajax({
+                url,
+                type: method,
+                contentType: "application/json",
+                headers: { "Authorization": `Bearer ${token}` },
+                data: JSON.stringify(data),
+                success: () => fetchNotes()
+            });
+        }
+
+        function deleteNote() {
+            if (currentNoteId) {
+                $.ajax({
+                    url: `http://localhost:5000/note/${currentNoteId}`,
+                    type: "DELETE",
+                    headers: { "Authorization": `Bearer ${token}` },
+                    success: () => {
+                        currentNoteId = null;
+                        $("#noteTitle").val("");
+                        $("#noteContent").val("");
+                        fetchNotes();
+                    }
+                });
+            }
+        }
+
+        $(document).on("click", "#noteList li", function () {
+            let noteId = $(this).data("id");
+            $.ajax({
+                url: `http://localhost:5000/note/${noteId}`,
+                type: "GET",
+                headers: { "Authorization": `Bearer ${token}` },
+                success: (data) => {
+                    $("#noteTitle").val(data.title);
+                    $("#noteContent").val(data.content);
+                    currentNoteId = noteId;
+                }
+            });
+        });
+
+        $("#saveNote").click(() => saveNote());
+        $("#deleteNote").click(() => deleteNote());
+        $("#addNote").click(() => {
+            currentNoteId = null;
+            $("#noteTitle").val("");
+            $("#noteContent").val("");
+        });
+
+        $(document).ready(() => fetchNotes());
+    </script>
+</body>
+</html>
