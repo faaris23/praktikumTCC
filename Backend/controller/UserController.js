@@ -5,11 +5,6 @@ export const getUsers = async(req, res)=>{
         const response = await User.findAll();
         res.status(200).json(response);
 
-        // db.query('SELECT * FROM users', (err, results) => {
-        //     if (err) throw err;
-        //     console.log(results);
-        //   }); 
-        //Kalo tampa ORM
     } catch (error) {
         console.log(error.message);
     }

@@ -9,6 +9,9 @@
 </head>
 <body class="bg-gray-100 h-screen flex flex-col overflow-auto">
     
+    <!-- Logout Button -->
+    <button id="logout" class="fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-red-700">Logout</button>
+    
     <!-- Sidebar Button -->
     <button id="toggleSidebar" class="fixed top-4 left-4 text-3xl z-50">☰</button>
     
@@ -36,86 +39,105 @@
     </div>
     
     <script>
+        let notes = {};
         let currentNoteId = null;
-        let userId = localStorage.getItem("userId");
-        let token = localStorage.getItem("token");
         
-        if (!userId || !token) {
-            alert("You need to login first!");
-            window.location.href = "login.html";
-        }
-
-        function fetchNotes() {
-            $.ajax({
-                url: `http://localhost:5000/notes/${userId}`,
-                type: "GET",
-                headers: { "Authorization": `Bearer ${token}` },
-                success: (data) => {
-                    $("#noteList").html("");
-                    data.forEach(note => {
-                        $("#noteList").append(`<li class='p-2 border-b cursor-pointer' data-id='${note.id}'>${note.title}</li>`);
-                    });
+        $(document).ready(function() {
+            $("#toggleSidebar").click(() => {
+                $("#sidebar").toggleClass("-translate-x-full");
+                $("#overlay").toggleClass("hidden");
+            });
+            
+            $("#overlay").click(() => {
+                $("#sidebar").addClass("-translate-x-full");
+                $("#overlay").addClass("hidden");
+            });
+            
+            $("#logout").click(() => {
+                alert("Logging out...");
+                window.location.href = "login.html"; 
+            });
+            
+            function createNewNote() {
+                let noteId = Date.now();
+                let defaultTitle = "New Note";
+                
+                $("#noteTitle").val("");
+                $("#noteContent").val("");
+                
+                notes[noteId] = { title: defaultTitle, content: "" };
+                currentNoteId = noteId;
+                
+                let truncatedTitle = defaultTitle;
+                
+                $("#noteList").prepend(`<li class='p-2 border-b cursor-pointer' data-id='${noteId}'>${truncatedTitle}</li>`);
+            }
+            
+            $("#addNote").click(() => {
+                createNewNote();
+            });
+            
+            $("#saveNote").click(() => {
+                if (currentNoteId !== null) {
+                    let title = $("#noteTitle").val().trim();
+                    let content = $("#noteContent").val().trim();
+                    
+                    if (!title) title = "Untitled Note";
+                    
+                    let truncatedTitle = title.length > 20 ? title.substring(0, 17) + "..." : title;
+                    
+                    notes[currentNoteId] = { title, content };
+                    
+                    if ($(`#noteList li[data-id='${currentNoteId}']`).length === 0) {
+                        $("#noteList").prepend(`<li class='p-2 border-b cursor-pointer' data-id='${currentNoteId}'>${truncatedTitle}</li>`);
+                    } else {
+                        $(`#noteList li[data-id='${currentNoteId}']`).text(truncatedTitle);
+                    }
+                } else if (Object.keys(notes).length === 0) {
+                    createNewNote();
                 }
             });
-        }
-
-        function saveNote() {
-            let title = $("#noteTitle").val().trim();
-            let content = $("#noteContent").val().trim();
-
-            let method = currentNoteId ? "PATCH" : "POST";
-            let url = currentNoteId ? `http://localhost:5000/note/${currentNoteId}` : "http://localhost:5000/notes";
-            let data = { user_id: userId, title, content };
-
-            $.ajax({
-                url,
-                type: method,
-                contentType: "application/json",
-                headers: { "Authorization": `Bearer ${token}` },
-                data: JSON.stringify(data),
-                success: () => fetchNotes()
-            });
-        }
-
-        function deleteNote() {
-            if (currentNoteId) {
-                $.ajax({
-                    url: `http://localhost:5000/note/${currentNoteId}`,
-                    type: "DELETE",
-                    headers: { "Authorization": `Bearer ${token}` },
-                    success: () => {
+            
+            $("#deleteNote").click(() => {
+                if (currentNoteId !== null) {
+                    let noteIds = Object.keys(notes);
+                    let index = noteIds.indexOf(currentNoteId.toString());
+                    
+                    delete notes[currentNoteId];
+                    $(`#noteList li[data-id='${currentNoteId}']`).remove();
+                    
+                    if (noteIds.length > 1) {
+                        let newIndex = index > 0 ? index - 1 : 0;
+                        let newNoteId = noteIds[newIndex];
+                        
+                        $("#noteTitle").val(notes[newNoteId].title);
+                        $("#noteContent").val(notes[newNoteId].content);
+                        currentNoteId = newNoteId;
+                    } else {
                         currentNoteId = null;
                         $("#noteTitle").val("");
                         $("#noteContent").val("");
-                        fetchNotes();
+                        
+                        if (Object.keys(notes).length === 0) {
+                            createNewNote();
+                        }
                     }
-                });
-            }
-        }
-
-        $(document).on("click", "#noteList li", function () {
-            let noteId = $(this).data("id");
-            $.ajax({
-                url: `http://localhost:5000/note/${noteId}`,
-                type: "GET",
-                headers: { "Authorization": `Bearer ${token}` },
-                success: (data) => {
-                    $("#noteTitle").val(data.title);
-                    $("#noteContent").val(data.content);
+                }
+            });
+            
+            $(document).on("click", "#noteList li", function() {
+                let noteId = $(this).data("id");
+                if (notes[noteId]) {
+                    $("#noteTitle").val(notes[noteId].title);
+                    $("#noteContent").val(notes[noteId].content);
                     currentNoteId = noteId;
                 }
             });
+            
+            if (Object.keys(notes).length === 0) {
+                createNewNote();
+            }
         });
-
-        $("#saveNote").click(() => saveNote());
-        $("#deleteNote").click(() => deleteNote());
-        $("#addNote").click(() => {
-            currentNoteId = null;
-            $("#noteTitle").val("");
-            $("#noteContent").val("");
-        });
-
-        $(document).ready(() => fetchNotes());
     </script>
 </body>
 </html>

@@ -9,6 +9,9 @@
 </head>
 <body class="bg-gray-100 h-screen flex flex-col overflow-auto">
     
+    <!-- Logout Button -->
+    <button id="logout" class="fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-red-700">Logout</button>
+    
     <!-- Sidebar Button -->
     <button id="toggleSidebar" class="fixed top-4 left-4 text-3xl z-50">☰</button>
     
@@ -48,6 +51,11 @@
             $("#overlay").click(() => {
                 $("#sidebar").addClass("-translate-x-full");
                 $("#overlay").addClass("hidden");
+            });
+            
+            $("#logout").click(() => {
+                alert("Logging out...");
+                window.location.href = "login.html"; 
             });
             
             function createNewNote() {
@@ -126,7 +134,6 @@
                 }
             });
             
-            // Create the first note if none exists
             if (Object.keys(notes).length === 0) {
                 createNewNote();
             }

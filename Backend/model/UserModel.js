@@ -2,17 +2,12 @@ import { Sequelize } from "sequelize";
 import db from "../config/Database.js";
 
 const User = db.define('users',{
+    id: {type:Sequelize.INTEGER,primaryKey:true,autoIncrement:true},
     name:{type:Sequelize.STRING,allowNull:true},
-    email: Sequelize.STRING,
-    gender: Sequelize.STRING},{
-
-        freezeTableName:true//Buat nama table gak jama, defaultnya convert nama jadi jamak //,
-        //timestamps: true,   // Tetep aktifin createdAt & updatedAt
-       // createdAt: 'tanggal_dibuat',  // Ubah nama createdAt jadi "tanggal_dibuat"
-        //updatedAt: 'tanggal_diubah'   // Ubah nama updatedAt jadi "tanggal_diubah"
-
-    
-});
+    password: {type:Sequelize.STRING(255),allowNull:false}},
+    {
+        freezeTableName:true
+    });
 
 export default User;
 
