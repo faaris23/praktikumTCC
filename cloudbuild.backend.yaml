@@ -1,24 +1,22 @@
 steps:
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/prak-tcc-1-450606', '.']
-    dir: 'backend'
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["build", "-t", "gcr.io/$PROJECT_ID/backend-IU777", "."]
+    dir: "backend"
 
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/prak-tcc-1-450606']
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$PROJECT_ID/backend-IU777"]
 
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     entrypoint: gcloud
-    [
-      'run',
-      'deploy',
-      'backend',
-      '--image=gcr.io/$PROJECT_ID/prak-tcc-1-450606',
-      '--platform=managed',
-      '--region=us-central1',
-      '--allow-unauthenticated',
-      '--set-env-vars=GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_REGION=us-central1,GOOGLE_CLOUD_STORAGE_BUCKET=$PROJECT_ID-bucket,GOOGLE_CLOUD_STORAGE_URL=gs://$PROJECT_ID-bucket,GOOGLE_CLOUD_FUNCTION_URL=https://us-central1-$PROJECT_ID.cloudfunctions.net/hello-world',
-      '--set-secrets=GOOGLE_CLOUD_SECRET=projects/$PROJECT_ID/secrets/backend-secret:latest'
-    ]
+    args:
+      [
+        "run", "deploy", "backend-IU777",
+        "--image", "gcr.io/$PROJECT_ID/backend-IU777",
+        "--timeout", "1000s",
+        "--port", "3000",
+        "--region", "us-central1",
+        "--allow-unauthenticated"
+      ]
 
 options:
-  loogging: CLOUD_LOGGING_ONLY
+  logging: CLOUD_LOGGING_ONLY
