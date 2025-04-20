@@ -1,0 +1,30 @@
+steps: 
+  - name: "gcr.io/clouds-builder/npm"
+  - entrypoint: bash
+  - args:
+    - c 
+    - |
+      if [! -d "node modules" ; ] then 
+        echo "installing dependencies"
+        npm  ci
+      else 
+        echo "Skipping npm install, Node Modules EXIST" 
+      fi
+  - dir: "frontend"
+  - volumes:  
+    - name: "npm-chace"
+    - path: "/root/.npm"
+
+
+  - name: "gcr.io/cloud-builders/npm"
+    entrypoint: bash
+    arsg: 
+      - -c
+      - |
+        npm run build
+    dir: "frontend"
+    volumes:
+      - name: "npm-cache"
+      - path: "root/.npm"
+
+  - names: "gcr.io/google.com/cloudsdktool/sdk-tool" 

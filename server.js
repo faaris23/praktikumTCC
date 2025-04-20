@@ -50,7 +50,8 @@ app.post("/api/login", async (req, res) => {
     }
 });
 
-// Server listen
-app.listen(5500, () => {
-    console.log("Server running on port 3000");
+const port = process.env.PORT || 8080;
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
 });
+
