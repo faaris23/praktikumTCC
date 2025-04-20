@@ -13,7 +13,7 @@ export default User;
 
 (async()=>{
     await db.sync();
-})(); //ngesync ke db, kalo gak ada bakal buat otomatis table sesuai model
+})(); 
 
 
 
